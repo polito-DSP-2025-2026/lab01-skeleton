@@ -55,14 +55,15 @@ exports.getFilmReviewsTotal = function (filmId) {
  * Issue film review to some users
  * The film with ID filmId is assigned to one or more users for review and the corresponding reviews are created. The users are specified in the review representations in the request body. This operation can only be performed by the owner.
  *
- * body List the new film reviews, including the users to whom they are issued
  * filmId Long ID of the film
+ * invitation List of the users to whom the review must be issued
+ * owner Long ID of the user performing the operation
  * returns List
  **/
-exports.issueFilmReview = function (invitations, owner) {
+exports.issueFilmReview = function (filmId, invitations, owner) {
   return new Promise((resolve, reject) => {
     const sql1 = "SELECT owner, private FROM films WHERE id = ?";
-    db.all(sql1, [invitations[0].filmId], (err, rows) => {
+    db.all(sql1, [filmId], (err, rows) => {
       if (err) {
         reject(err);
       }
@@ -80,13 +81,13 @@ exports.issueFilmReview = function (invitations, owner) {
         for (var i = 0; i < invitations.length; i++) {
           if (i == 0) sql2 += ' WHERE id = ?';
           else sql2 += ' OR id = ?'
-          invitedUsers[i] = invitations[i].reviewerId;
+          invitedUsers[i] = invitations[i];
         }
         db.all(sql2, invitedUsers, async function (err, rows) {
           if (err) {
             reject(err);
           }
-          else if (rows.length !== invitations.length) {
+          else if (rows.length !== invitations.length){
             reject("REVIEWER_ID_IS_NOT_USER");
           }
           else {
